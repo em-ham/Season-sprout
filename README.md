@@ -46,3 +46,7 @@ This build bundles the 213-record Season & Sprout database audited in Batch 33. 
 The app does not check live retail stock. An empty month window means “not recorded”, not proof of unavailability. Imported growing-region windows are not necessarily evidence of UK imports from that origin in that month. Evidence URLs and verification notes are shown on produce cards where available.
 
 When this build opens in a browser with older Season & Sprout local data, it refreshes seasonal database fields from the bundled dataset while retaining saved preferences, personal notes, recipes, plans and user-added ingredients. Back up important data using **Export my data** before updating. Local data stays in that browser and does not sync between devices.
+
+
+## Seasonal display update
+The seasonal guide now filters by explicit month arrays for UK outdoor harvest, storage, protected growing and imported growing-region season. It no longer falls back to the generic `months` array. Produce cards show compact UK-month and import-season lists; detailed verification and source notes are tucked into a disclosure. A blank month field means the database has no recorded window, not proof that the produce cannot be bought.
