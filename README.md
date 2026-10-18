@@ -58,3 +58,10 @@ Produce cards use a 12-month UK calendar: green = UK outdoor/protected harvest w
 
 ## Follow-up fixes
 The apples family match is anchored to the start of the name so Pineapple is not grouped under Apples. Month-strip cells have explicit visible backgrounds and a strong outline around the selected month.
+
+
+## Four monthly recommendation priorities
+1. UK harvest now (UK storage is labelled separately).
+2. Useful year-round staples (cultivated mushrooms and cooking onions included as general supply staples, not a UK-origin guarantee).
+3. Fresh imports with a recorded growing-region season.
+4. Preserved alternatives for ingredients without a recorded fresh window this month. Common alternative formats are suggestions only; explicit dislike preferences for each format are excluded. Unknown preferences are not treated as a positive preference.

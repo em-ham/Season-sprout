@@ -55,6 +55,36 @@ function init(){
 }
 function switchView(v){$$(".tab").forEach(b=>b.classList.toggle("active",b.dataset.view===v));$$(".view").forEach(s=>s.classList.toggle("active",s.id==="view-"+v));}
 function preferencePill(p){return `<span class="pill ${p==="Dislike"?"dislike":""}">${esc(p||"Not tried")}</span>`}
+function isYearRoundStaple(x){
+ if(x.yearRoundSupply===true)return true;
+ const name=String(x.name||"").toLowerCase();
+ // Cultivated mushrooms are commonly produced indoors; this is a supply category,
+ // not a claim that they are UK-grown or in an outdoor harvest season.
+ if(/mushrooms?$/.test(name)&&!name.includes("wild"))return true;
+ // Storage onions are a dependable staple across the year, from stored and imported supply.
+ if(/^(brown|red|white) onions?$/.test(name))return true;
+ const windows=[x.ukOutdoorMonths,x.storageMonths].filter(Array.isArray).flat();
+ return windows.filter(Boolean).length>=9;
+}
+function knownAlternatives(x){
+ if(Array.isArray(x.gapAlternatives)&&x.gapAlternatives.length)return x.gapAlternatives;
+ const n=String(x.name||"").toLowerCase();
+ if(/broccoli|cauliflower|peas|spinach|green beans|sweetcorn/.test(n))return ["Frozen"];
+ if(/pepper/.test(n))return ["Frozen","Jarred"];
+ if(/tomato/.test(n))return ["Tinned","Jarred"];
+ if(/mushroom/.test(n)&&!n.includes("wild"))return ["Dried","Frozen"];
+ if(/bean|chickpea|lentil/.test(n))return ["Tinned","Dried"];
+ if(/onion|garlic/.test(n))return ["Frozen","Dried"];
+ if(/berries|strawberr|raspberr|blueberr|blackberr/.test(n))return ["Frozen"];
+ if(/mango|pineapple|peach|pear|apricot/.test(n))return ["Tinned","Frozen","Dried"];
+ if(/herb|basil|coriander|parsley|dill|mint/.test(n))return ["Frozen","Dried"];
+ if(/carrot|parsnip|swede|squash/.test(n))return ["Frozen"];
+ return [];
+}
+function alternativePreference(x,format){
+ const keys={Frozen:"frozenPreference",Tinned:"tinnedPreference",Dried:"driedPreference",Jarred:"otherPreservedPreference"};
+ return x[keys[format]]||"";
+}
 function monthNames(arr){
  const names=MONTHS.filter((_,i)=>Array.isArray(arr)&&Boolean(arr[i]));
  return names.length?names.join(", "):"Not recorded";
@@ -62,17 +92,25 @@ function monthNames(arr){
 function renderSeasonal(){
  const month=Number($("#monthSelect").value),q=$("#seasonSearch").value.toLowerCase(),cat=$("#seasonCategory").value,pref=$("#seasonPreference").value,hide=$("#hideDislikes").checked;
  const items=state.ingredients.filter(x=>(!hide||x.preference!=="Dislike")&&(!q||x.name.toLowerCase().includes(q))&&(!cat||x.category===cat)&&(!pref||x.preference===pref));
- // Only use the explicit month arrays. Never fall back to the generic `months` array,
- // which can describe broad availability and previously caused almost every item to appear.
  const has=(x,key)=>Array.isArray(x[key])&&Boolean(x[key][month]);
- const outdoor=items.filter(x=>has(x,"ukOutdoorMonths"));
- const storage=items.filter(x=>has(x,"storageMonths")&&!has(x,"ukOutdoorMonths"));
- const protectedFresh=items.filter(x=>has(x,"protectedMonths")&&!has(x,"ukOutdoorMonths")&&!has(x,"storageMonths"));
- const uk=[...outdoor,...storage,...protectedFresh].sort((a,b)=>a.name.localeCompare(b.name));
- const imp=items.filter(x=>has(x,"importedMonths")&&!has(x,"ukOutdoorMonths")&&!has(x,"storageMonths")&&!has(x,"protectedMonths"));
- const preserve=items.filter(x=>!has(x,"ukOutdoorMonths")&&!has(x,"storageMonths")&&!has(x,"protectedMonths")&&!has(x,"importedMonths")&&(x.gapFiller||x.preservedOptions||x.preservedGapFillerNotes));
- const group=(title,arr,kind)=>`<section class="priority-group"><h3><i class="dot ${kind}"></i>${title}<span class="group-note">${arr.length}</span></h3>${arr.length?`<div class="ingredient-grid">${arr.map(x=>card(x,month)).join("")}</div>`:`<div class="empty-state">No matching produce recorded for ${MONTHS[month]}. Blank data means “not recorded”, not definitely unavailable.</div>`}</section>`;
- $("#seasonalGroups").innerHTML=group("1 · UK-grown / stored",uk,"uk")+group("2 · Seasonal imports",imp,"import")+group("3 · Preserved alternatives",preserve,"preserve");
+ const harvest=items.filter(x=>has(x,"ukOutdoorMonths")&&!isYearRoundStaple(x));
+ const stored=items.filter(x=>has(x,"storageMonths")&&!has(x,"ukOutdoorMonths")&&!isYearRoundStaple(x));
+ const protectedFresh=items.filter(x=>has(x,"protectedMonths")&&!has(x,"ukOutdoorMonths")&&!has(x,"storageMonths")&&!isYearRoundStaple(x));
+ const ukSeasonal=[...harvest,...stored,...protectedFresh].sort((a,b)=>a.name.localeCompare(b.name));
+ const staples=items.filter(x=>isYearRoundStaple(x)&&!has(x,"ukOutdoorMonths")&&!has(x,"storageMonths")&&!has(x,"protectedMonths")).sort((a,b)=>a.name.localeCompare(b.name));
+ const imports=items.filter(x=>has(x,"importedMonths")&&!has(x,"ukOutdoorMonths")&&!has(x,"storageMonths")&&!has(x,"protectedMonths")&&!isYearRoundStaple(x)).sort((a,b)=>a.name.localeCompare(b.name));
+ // Gap-fillers are shown alongside missing fresh seasonal choices, based on common preserved forms.
+ // Respect explicit dislike preferences for each format; unknown preferences remain unclassified.
+ const gaps=items.filter(x=>!has(x,"ukOutdoorMonths")&&!has(x,"storageMonths")&&!has(x,"protectedMonths")&&!has(x,"importedMonths"))
+  .map(x=>({...x,gapAlternatives:knownAlternatives(x).filter(f=>alternativePreference(x,f)!=="Dislike")}))
+  .filter(x=>x.gapAlternatives.length||x.gapFiller||x.preservedOptions||x.preservedGapFillerNotes)
+  .sort((a,b)=>a.name.localeCompare(b.name));
+ const group=(title,subtitle,arr,kind)=>`<section class="priority-group"><h3><i class="dot ${kind}"></i>${title}<span class="group-note">${arr.length}</span></h3><p class="group-explainer">${subtitle}</p>${arr.length?`<div class="ingredient-grid">${arr.map(x=>card(x,month)).join("")}</div>`:`<div class="empty-state">No matching produce recorded for ${MONTHS[month]}.</div>`}</section>`;
+ $("#seasonalGroups").innerHTML=
+  group("1 · UK harvest season now","Fresh UK-grown produce in its recorded harvest window, plus stored UK crops where noted.",ukSeasonal,"uk")+
+  group("2 · Useful year-round staples","Dependable staples, including cultivated mushrooms and onions; this does not guarantee a particular shop has stock.",staples,"staple")+
+  group("3 · In season elsewhere","Fresh imports with a recorded growing-region season this month. Origin and shop stock may vary.",imports,"import")+
+  group("4 · Preserved alternatives for seasonal gaps","Try these when fresh seasonal options aren't in their recorded window. Check your preferred format.",gaps,"preserve");
 }
 function card(x,monthOverride=null){
  const month=monthOverride===null?Number($("#monthSelect")?.value)||0:monthOverride;
@@ -92,7 +130,7 @@ function card(x,monthOverride=null){
  const monthRange=arr=>arr.length?arr.join(", "):"Not recorded";
  const shortNote=(x.seasonNotes||"").split(/(?:;|\. )/)[0].trim();
  const prefs=x.preference&&x.preference!=="Untried"?preferencePill(x.preference):"";
- return `<article class="produce-card"><div class="card-top"><div><h4>${esc(x.name)}</h4><p class="category-label">${esc(x.category||"Produce")}</p></div>${prefs}</div><div class="card-detail"><strong>${esc(monthLabel)}</strong></div>${strip}<p class="month-caption"><strong>UK months:</strong> ${esc(monthRange(ukMonths))}</p>${importMonths.length?`<p class="month-caption"><strong>Import season:</strong> ${esc(monthRange(importMonths))}</p>`:""}${shortNote?`<p class="card-detail">${esc(shortNote)}</p>`:""}${x.gapFiller?`<p class="card-detail"><span class="pill preserved">Preserved</span> ${esc(x.gapFiller)}</p>`:""}${x.sourceUrls?`<details class="card-detail"><summary>Sources & confidence</summary><p>${esc(x.originBySeason||x.importOrigins||"")}</p><p>${esc(x.verificationStatus||"Verification status not recorded")}</p><p>${esc(x.sourceUrls)}</p>${x.seasonalConfidence?`<p>Confidence: ${esc(x.seasonalConfidence)}</p>`:""}</details>`:""}<div class="card-actions"><button class="small-button" data-edit-ingredient="${esc(x.name)}">Edit</button></div></article>`;
+ return `<article class="produce-card"><div class="card-top"><div><h4>${esc(x.name)}</h4><p class="category-label">${esc(x.category||"Produce")}</p></div>${prefs}</div><div class="card-detail"><strong>${esc(monthLabel)}</strong></div>${strip}<p class="month-caption"><strong>UK months:</strong> ${esc(monthRange(ukMonths))}</p>${importMonths.length?`<p class="month-caption"><strong>Import season:</strong> ${esc(monthRange(importMonths))}</p>`:""}${shortNote?`<p class="card-detail">${esc(shortNote)}</p>`:""}${x.gapAlternatives?.length?`<p class="card-detail"><strong>Try instead:</strong> ${x.gapAlternatives.map(esc).join(" · ")}</p>`:""}${x.gapFiller?`<p class="card-detail"><span class="pill preserved">Preserved</span> ${esc(x.gapFiller)}</p>`:""}${x.sourceUrls?`<details class="card-detail"><summary>Sources & confidence</summary><p>${esc(x.originBySeason||x.importOrigins||"")}</p><p>${esc(x.verificationStatus||"Verification status not recorded")}</p><p>${esc(x.sourceUrls)}</p>${x.seasonalConfidence?`<p>Confidence: ${esc(x.seasonalConfidence)}</p>`:""}</details>`:""}<div class="card-actions"><button class="small-button" data-edit-ingredient="${esc(x.name)}">Edit</button></div></article>`;
 }
 function produceFamily(name){
  const n=name.toLowerCase();

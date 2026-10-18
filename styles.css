@@ -45,3 +45,5 @@ dialog{border:1px solid var(--line);border-radius:20px;padding:0;width:min(620px
 .month-box.none{background-color:#e8e9e3!important}
 .month-cell.current-month .month-name{color:var(--forest);font-weight:900}
 .month-cell.current-month .month-box{outline:2px solid var(--forest);outline-offset:1px}
+
+.dot.staple{background:#7f8f79}.priority-group .group-explainer{font-size:.82rem;color:var(--muted);margin:6px 0 14px}
