@@ -28,16 +28,21 @@
 <main>
   <section id="view-seasonal" class="view active">
     <div class="section-heading">
-      <div><p class="eyebrow">START WITH WHAT'S GOOD NOW</p><h2>Your monthly produce map</h2>
-      <p class="muted">Prioritise UK-grown produce, then seasonal imports, then preserved gap-fillers.</p></div>
+      <div><p class="eyebrow">START WITH WHAT'S GOOD NOW</p><h2>What’s in season this month?</h2>
+      <p class="muted">Choose a month to see UK harvests, stored produce and seasonal imports.</p></div>
       <label class="month-picker">Month
         <select id="monthSelect"></select>
       </label>
     </div>
     <div class="priority-legend">
-      <span><i class="dot uk"></i><b>1 · UK seasonal</b></span>
-      <span><i class="dot import"></i><b>2 · Seasonal imports</b></span>
-      <span><i class="dot preserve"></i><b>3 · Preserved gap-fillers</b></span>
+      <span><i class="dot uk"></i><b>UK-grown</b></span>
+      <span><i class="dot import"></i><b>Seasonal imports</b></span>
+      <span><i class="dot preserve"></i><b>Preserved options</b></span>
+    </div>
+    <div class="month-key" aria-label="Month strip legend">
+      <span><i class="month-swatch harvest"></i> UK harvest season</span>
+      <span><i class="month-swatch storage"></i> Available from storage</span>
+      <span><i class="month-swatch none"></i> Not recorded as UK harvest/storage</span>
     </div>
     <div class="filter-row">
       <input id="seasonSearch" type="search" placeholder="Search ingredients…">

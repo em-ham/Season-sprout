@@ -19,3 +19,18 @@ dialog{border:1px solid var(--line);border-radius:20px;padding:0;width:min(620px
 .produce-family[open]>summary::before{content:'−'}
 .family-count{margin-left:auto;font:700 .78rem ui-sans-serif,system-ui;color:var(--muted);background:#edf1e9;padding:4px 9px;border-radius:999px}
 .family-items{padding:0 12px 12px}
+
+
+/* Seed-packet-style UK seasonal calendar */
+.month-key{display:flex;flex-wrap:wrap;gap:10px 18px;margin:12px 0 22px;color:var(--muted);font-size:.78rem}
+.month-key span{display:inline-flex;align-items:center;gap:7px}
+.month-swatch{display:inline-block;width:13px;height:13px;border-radius:3px;border:1px solid rgba(35,55,43,.15)}
+.month-swatch.harvest,.month-box.harvest{background:#6c9b69}
+.month-swatch.storage,.month-box.storage{background:#e7bd57}
+.month-swatch.none,.month-box.none{background:#e8e9e3}
+.month-strip{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:3px;margin-top:12px}
+.month-cell{min-width:0;text-align:center}
+.month-name{display:block;font-size:.62rem;font-weight:800;color:var(--muted);margin-bottom:4px}
+.month-box{display:block;height:14px;border-radius:3px;border:1px solid rgba(35,55,43,.08)}
+.month-caption{font-size:.76rem;color:var(--muted);margin:7px 0 0}
+@media(max-width:420px){.month-strip{gap:2px}.month-name{font-size:.55rem}.month-box{height:11px}}

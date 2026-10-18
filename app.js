@@ -80,14 +80,19 @@ function card(x,monthOverride=null){
  const storage=Array.isArray(x.storageMonths)&&x.storageMonths[month];
  const protectedFresh=Array.isArray(x.protectedMonths)&&x.protectedMonths[month];
  const imported=Array.isArray(x.importedMonths)&&x.importedMonths[month];
- const monthLabel=outdoor?"UK outdoor harvest":storage?"UK storage":protectedFresh?"UK protected-grown":imported?"Seasonal growing-region import":"Preserved option / season not recorded";
+ const monthLabel=outdoor?"UK harvest season this month":storage?"Available from UK storage":protectedFresh?"UK protected-grown this month":imported?"In season in growing regions":"No UK harvest/storage window recorded";
+ const statusFor=i=>{
+   if(Array.isArray(x.ukOutdoorMonths)&&x.ukOutdoorMonths[i] || Array.isArray(x.protectedMonths)&&x.protectedMonths[i]) return "harvest";
+   if(Array.isArray(x.storageMonths)&&x.storageMonths[i]) return "storage";
+   return "none";
+ };
+ const strip=`<div class="month-strip" role="img" aria-label="UK harvest and storage calendar">${MONTHS.map((name,i)=>`<div class="month-cell"><span class="month-name">${name.slice(0,3)}</span><span class="month-box ${statusFor(i)}" title="${esc(name+": "+(statusFor(i)==="harvest"?"UK harvest season":statusFor(i)==="storage"?"Available from UK storage":"No UK harvest/storage window recorded"))}" aria-label="${esc(name+": "+(statusFor(i)==="harvest"?"UK harvest season":statusFor(i)==="storage"?"Available from UK storage":"No UK harvest/storage window recorded"))}"></span></div>`).join("")}</div>`;
  const ukMonths=[...new Set([...(Array.isArray(x.ukOutdoorMonths)?x.ukOutdoorMonths.map((v,i)=>v?MONTHS[i].slice(0,3):null):[]),...(Array.isArray(x.storageMonths)?x.storageMonths.map((v,i)=>v?MONTHS[i].slice(0,3):null):[]),...(Array.isArray(x.protectedMonths)?x.protectedMonths.map((v,i)=>v?MONTHS[i].slice(0,3):null):[])].filter(Boolean))];
  const importMonths=Array.isArray(x.importedMonths)?x.importedMonths.map((v,i)=>v?MONTHS[i].slice(0,3):null).filter(Boolean):[];
- const monthRange=(arr)=>arr.length?arr.join(", "):"Not recorded";
+ const monthRange=arr=>arr.length?arr.join(", "):"Not recorded";
  const shortNote=(x.seasonNotes||"").split(/(?:;|\. )/)[0].trim();
- const note=x.originBySeason||x.importOrigins||"";
  const prefs=x.preference&&x.preference!=="Untried"?preferencePill(x.preference):"";
- return `<article class="produce-card"><div class="card-top"><div><h4>${esc(x.name)}</h4><p class="category-label">${esc(x.category||"Produce")}</p></div>${prefs}</div><div class="card-detail"><strong>${esc(monthLabel)}</strong></div><p class="card-detail"><strong>UK months:</strong> ${esc(monthRange(ukMonths))}</p><p class="card-detail"><strong>Import season:</strong> ${esc(monthRange(importMonths))}</p>${shortNote?`<p class="card-detail">${esc(shortNote)}</p>`:""}${x.gapFiller?`<p class="card-detail"><span class="pill preserved">Preserved</span> ${esc(x.gapFiller)}</p>`:""}${x.sourceUrls?`<details class="card-detail"><summary>Sources & confidence</summary><p>${esc(note)}</p><p>${esc(x.verificationStatus||"Verification status not recorded")}</p><p>${esc(x.sourceUrls)}</p>${x.seasonalConfidence?`<p>Confidence: ${esc(x.seasonalConfidence)}</p>`:""}</details>`:""}<div class="card-actions"><button class="small-button" data-edit-ingredient="${esc(x.name)}">Edit</button></div></article>`;
+ return `<article class="produce-card"><div class="card-top"><div><h4>${esc(x.name)}</h4><p class="category-label">${esc(x.category||"Produce")}</p></div>${prefs}</div><div class="card-detail"><strong>${esc(monthLabel)}</strong></div>${strip}<p class="month-caption"><strong>UK months:</strong> ${esc(monthRange(ukMonths))}</p>${importMonths.length?`<p class="month-caption"><strong>Import season:</strong> ${esc(monthRange(importMonths))}</p>`:""}${shortNote?`<p class="card-detail">${esc(shortNote)}</p>`:""}${x.gapFiller?`<p class="card-detail"><span class="pill preserved">Preserved</span> ${esc(x.gapFiller)}</p>`:""}${x.sourceUrls?`<details class="card-detail"><summary>Sources & confidence</summary><p>${esc(x.originBySeason||x.importOrigins||"")}</p><p>${esc(x.verificationStatus||"Verification status not recorded")}</p><p>${esc(x.sourceUrls)}</p>${x.seasonalConfidence?`<p>Confidence: ${esc(x.seasonalConfidence)}</p>`:""}</details>`:""}<div class="card-actions"><button class="small-button" data-edit-ingredient="${esc(x.name)}">Edit</button></div></article>`;
 }
 function produceFamily(name){
  const n=name.toLowerCase();

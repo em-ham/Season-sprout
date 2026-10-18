@@ -50,3 +50,7 @@ When this build opens in a browser with older Season & Sprout local data, it ref
 
 ## Seasonal display update
 The seasonal guide now filters by explicit month arrays for UK outdoor harvest, storage, protected growing and imported growing-region season. It no longer falls back to the generic `months` array. Produce cards show compact UK-month and import-season lists; detailed verification and source notes are tucked into a disclosure. A blank month field means the database has no recorded window, not proof that the produce cannot be bought.
+
+
+## Seed-packet-style month strip
+Produce cards use a 12-month UK calendar: green = UK outdoor/protected harvest window; yellow = UK storage window; grey = no UK harvest/storage window recorded. Grey must not be interpreted as guaranteed retail unavailability, because some data is incomplete. User-facing labels use “UK harvest season this month” and “Available from UK storage”.
