@@ -44,10 +44,44 @@ function renderSeasonal(){
  $("#seasonalGroups").innerHTML=group("1 · Fresh UK seasonal","First choice",uk,"uk")+group("2 · Fresh, in global season","Seasonal imports",imp,"import")+group("Fresh year-round / storage","Available outside a narrow season",fresh,"uk")+group("3 · Preserved gap-fillers","Useful when fresh options aren't in season",preserved,"preserve");
 }
 function card(x){return `<article class="produce-card"><div class="card-top"><div><h4>${esc(x.name)}</h4><p class="category-label">${esc(x.category)}</p></div>${preferencePill(x.preference)}</div><div class="card-detail">${x.months?.[Number($("#monthSelect")?.value)||0]?"Fresh month marked":"Fresh month not marked"} · ${esc(x.availabilityType)}</div>${x.seasonNotes?`<p class="card-detail">${esc(x.seasonNotes)}</p>`:""}${x.gapFiller?`<p class="card-detail"><span class="pill preserved">Gap filler</span> ${esc(x.gapFiller)}</p>`:""}<div class="card-actions"><button class="small-button" data-edit-ingredient="${esc(x.name)}">Edit details</button></div></article>`}
+function produceFamily(name){
+ const n=name.toLowerCase();
+ const families=[
+  ["Mushrooms",/mushroom|shiitake|oyster|king oyster|enoki|shimeji|wood ear|porcini/],
+  ["Broccoli",/broccoli/],
+  ["Cauliflower & romanesco",/cauliflower|romanesco/],
+  ["Cabbage",/cabbage|hispi|savoy|chinese leaf|napa cabbage/],
+  ["Leafy greens",/spinach|rocket|watercress|kale|cavolo nero|chard|spring greens|mustard greens|sorrel|lettuce|lamb’s lettuce|lamb's lettuce/],
+  ["Onions & shallots",/onion|shallot/],
+  ["Garlic",/garlic/],
+  ["Peppers & chillies",/pepper|chilli|jalapeño|jalapeno|habanero/],
+  ["Tomatoes",/tomato/],
+  ["Courgettes & marrow",/courgette|marrow/],
+  ["Squash & pumpkin",/squash|pumpkin/],
+  ["Beetroot",/beetroot/],
+  ["Turnips & radishes",/turnip|radish|daikon|mooli/],
+  ["Beans & peas",/peas|mangetout|sugar snap|green beans|runner beans|broad beans|edamame/],
+  ["Melons",/melon|watermelon/],
+  ["Citrus",/orange|clementine|satsuma|mandarin|lemon|lime|pomelo|grapefruit/],
+  ["Berries",/strawberr|raspberr|blackberr|blueberr|blackcurrant|redcurrant|whitecurrant|gooseberr|elderberr|cranberr/],
+  ["Plums & stone fruit",/plum|damson|greengage|peach|nectarine|apricot|cherr/],
+  ["Pears",/pear/],
+  ["Apples",/apple/]
+ ];
+ const found=families.find(([,re])=>re.test(n));return found?found[0]:name;
+}
+function groupedCards(items){
+ const groups=new Map();items.forEach(x=>{const family=produceFamily(x.name);if(!groups.has(family))groups.set(family,[]);groups.get(family).push(x)});
+ return [...groups.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([family,arr])=>{
+  const isFamily=arr.length>1||arr.some(x=>produceFamily(x.name)!==x.name);
+  if(!isFamily)return card(arr[0]);
+  return `<details class="produce-family"><summary><span>${esc(family)}</span><span class="family-count">${arr.length} varieties</span></summary><div class="ingredient-grid family-items">${arr.sort((a,b)=>a.name.localeCompare(b.name)).map(card).join("")}</div></details>`;
+ }).join("");
+}
 function renderIngredients(){
  const q=$("#librarySearch").value.toLowerCase(),cat=$("#libraryCategory").value,pref=$("#libraryPreference").value,type=$("#libraryType").value;
  const items=state.ingredients.filter(x=>(!q||x.name.toLowerCase().includes(q))&&(!cat||x.category===cat)&&(!pref||x.preference===pref)&&(!type||x.availabilityType===type));
- $("#ingredientGrid").innerHTML=items.length?items.map(card).join(""):`<div class="empty-state">No ingredients match those filters.</div>`;
+ $("#ingredientGrid").innerHTML=items.length?groupedCards(items):`<div class="empty-state">No ingredients match those filters.</div>`;
 }
 function renderRecipes(){
  const q=$("#recipeSearch").value.toLowerCase(),slot=$("#recipeSlotFilter").value;
