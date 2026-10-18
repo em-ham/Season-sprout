@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#29483c">
+<title>Season & Sprout — Seasonal Produce Planner</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="hero">
+  <div class="brand-mark">✳</div>
+  <div>
+    <p class="eyebrow">YOUR PERSONAL FOOD GARDEN</p>
+    <h1>Season <em>&</em> Sprout</h1>
+    <p class="subhead">Cook with the season. Keep your favourites in reach.</p>
+  </div>
+  <button id="exportBtn" class="button button-outline">Export my data</button>
+</header>
+
+<nav class="tabs" aria-label="Main navigation">
+  <button class="tab active" data-view="seasonal">Seasonal guide</button>
+  <button class="tab" data-view="ingredients">Produce library</button>
+  <button class="tab" data-view="recipes">My recipes</button>
+  <button class="tab" data-view="planner">Meal planner</button>
+</nav>
+
+<main>
+  <section id="view-seasonal" class="view active">
+    <div class="section-heading">
+      <div><p class="eyebrow">START WITH WHAT'S GOOD NOW</p><h2>Your monthly produce map</h2>
+      <p class="muted">Prioritise UK-grown produce, then seasonal imports, then preserved gap-fillers.</p></div>
+      <label class="month-picker">Month
+        <select id="monthSelect"></select>
+      </label>
+    </div>
+    <div class="priority-legend">
+      <span><i class="dot uk"></i><b>1 · UK seasonal</b></span>
+      <span><i class="dot import"></i><b>2 · Seasonal imports</b></span>
+      <span><i class="dot preserve"></i><b>3 · Preserved gap-fillers</b></span>
+    </div>
+    <div class="filter-row">
+      <input id="seasonSearch" type="search" placeholder="Search ingredients…">
+      <select id="seasonCategory"><option value="">All categories</option></select>
+      <select id="seasonPreference">
+        <option value="">All preferences</option><option>Love</option><option>Like</option><option>Okay</option><option>Not tried</option><option>Dislike</option>
+      </select>
+      <label class="check-label"><input type="checkbox" id="hideDislikes" checked> Hide dislikes</label>
+    </div>
+    <div id="seasonalGroups" class="seasonal-groups"></div>
+    <p class="fineprint">Season windows are indicative starter data, not a live stock check. A blank month marker means “not marked”, not definitely unavailable. Some entries need further verification.</p>
+  </section>
+
+  <section id="view-ingredients" class="view">
+    <div class="section-heading"><div><p class="eyebrow">YOUR PERSONAL DATABASE</p><h2>Produce library</h2><p class="muted">Edit preferences and add your own notes. Changes are saved in this browser.</p></div>
+      <button id="addIngredientBtn" class="button button-primary">+ Add ingredient</button></div>
+    <div class="filter-row">
+      <input id="librarySearch" type="search" placeholder="Search produce…">
+      <select id="libraryCategory"><option value="">All categories</option></select>
+      <select id="libraryPreference"><option value="">All preferences</option><option>Love</option><option>Like</option><option>Okay</option><option>Not tried</option><option>Dislike</option></select>
+      <select id="libraryType"><option value="">All availability types</option><option>UK-grown seasonal</option><option>Imported seasonal</option><option>Fresh year-round / storage / protected</option><option>Season needs checking</option></select>
+    </div>
+    <div id="ingredientGrid" class="ingredient-grid"></div>
+  </section>
+
+  <section id="view-recipes" class="view">
+    <div class="section-heading"><div><p class="eyebrow">MAKE IT YOURS</p><h2>My recipe workshop</h2><p class="muted">Capture ideas, methods and the seasonal ingredients that inspired them.</p></div>
+      <button id="addRecipeBtn" class="button button-primary">+ New recipe</button></div>
+    <div class="filter-row"><input id="recipeSearch" type="search" placeholder="Search recipes…"><select id="recipeSlotFilter"><option value="">All recipe styles</option></select></div>
+    <div id="recipeGrid" class="recipe-grid"></div>
+  </section>
+
+  <section id="view-planner" class="view">
+    <div class="section-heading"><div><p class="eyebrow">A FLEXIBLE PLAN, NOT A RULEBOOK</p><h2>Meal planner</h2><p class="muted">Add meals and build a simple shopping list from what you plan to cook.</p></div>
+      <button id="addPlanBtn" class="button button-primary">+ Add meal</button></div>
+    <div id="plannerList" class="planner-list"></div>
+    <div class="shopping-panel"><div><h3>Shopping list</h3><p class="muted">Items are assembled from the ingredients you enter on planned meals.</p></div><button id="copyShoppingBtn" class="button button-outline">Copy list</button></div>
+    <div id="shoppingList" class="shopping-list"></div>
+  </section>
+</main>
+
+<dialog id="editDialog">
+  <form id="editForm" method="dialog">
+    <div class="dialog-top"><div><p class="eyebrow">MAKE A CHANGE</p><h2 id="dialogTitle">Edit</h2></div><button type="button" id="closeDialog" class="icon-button" aria-label="Close">×</button></div>
+    <div id="dialogFields" class="dialog-fields"></div>
+    <div class="dialog-actions"><button type="button" id="deleteItemBtn" class="button button-danger hidden">Delete</button><span class="spacer"></span><button type="button" id="cancelDialog" class="button button-outline">Cancel</button><button type="submit" class="button button-primary">Save</button></div>
+  </form>
+</dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+<footer><span>Season & Sprout</span><span>Made for curious seasonal cooking · Your data stays in your browser unless you export it.</span></footer>
+<script src="ingredients.js"></script>
+<script src="app.js"></script>
+</body></html>
