@@ -86,7 +86,7 @@ function card(x,monthOverride=null){
    if(Array.isArray(x.storageMonths)&&x.storageMonths[i]) return "storage";
    return "none";
  };
- const strip=`<div class="month-strip" role="img" aria-label="UK harvest and storage calendar">${MONTHS.map((name,i)=>`<div class="month-cell"><span class="month-name">${name.slice(0,3)}</span><span class="month-box ${statusFor(i)}" title="${esc(name+": "+(statusFor(i)==="harvest"?"UK harvest season":statusFor(i)==="storage"?"Available from UK storage":"No UK harvest/storage window recorded"))}" aria-label="${esc(name+": "+(statusFor(i)==="harvest"?"UK harvest season":statusFor(i)==="storage"?"Available from UK storage":"No UK harvest/storage window recorded"))}"></span></div>`).join("")}</div>`;
+ const strip=`<div class="month-strip" role="img" aria-label="UK harvest and storage calendar">${MONTHS.map((name,i)=>`<div class="month-cell ${i===month?"current-month":""}"><span class="month-name">${name.slice(0,3)}</span><span class="month-box ${statusFor(i)}" title="${esc(name+": "+(statusFor(i)==="harvest"?"UK harvest season":statusFor(i)==="storage"?"Available from UK storage":"No UK harvest/storage window recorded"))}" aria-label="${esc(name+": "+(statusFor(i)==="harvest"?"UK harvest season":statusFor(i)==="storage"?"Available from UK storage":"No UK harvest/storage window recorded"))}"></span></div>`).join("")}</div>`;
  const ukMonths=[...new Set([...(Array.isArray(x.ukOutdoorMonths)?x.ukOutdoorMonths.map((v,i)=>v?MONTHS[i].slice(0,3):null):[]),...(Array.isArray(x.storageMonths)?x.storageMonths.map((v,i)=>v?MONTHS[i].slice(0,3):null):[]),...(Array.isArray(x.protectedMonths)?x.protectedMonths.map((v,i)=>v?MONTHS[i].slice(0,3):null):[])].filter(Boolean))];
  const importMonths=Array.isArray(x.importedMonths)?x.importedMonths.map((v,i)=>v?MONTHS[i].slice(0,3):null).filter(Boolean):[];
  const monthRange=arr=>arr.length?arr.join(", "):"Not recorded";
@@ -116,7 +116,7 @@ function produceFamily(name){
   ["Berries",/strawberr|raspberr|blackberr|blueberr|blackcurrant|redcurrant|whitecurrant|gooseberr|elderberr|cranberr/],
   ["Plums & stone fruit",/plum|damson|greengage|peach|nectarine|apricot|cherr/],
   ["Pears",/pear/],
-  ["Apples",/apple/]
+  ["Apples",/^apples?\b/]
  ];
  const found=families.find(([,re])=>re.test(n));return found?found[0]:name;
 }

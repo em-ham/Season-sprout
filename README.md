@@ -54,3 +54,7 @@ The seasonal guide now filters by explicit month arrays for UK outdoor harvest, 
 
 ## Seed-packet-style month strip
 Produce cards use a 12-month UK calendar: green = UK outdoor/protected harvest window; yellow = UK storage window; grey = no UK harvest/storage window recorded. Grey must not be interpreted as guaranteed retail unavailability, because some data is incomplete. User-facing labels use “UK harvest season this month” and “Available from UK storage”.
+
+
+## Follow-up fixes
+The apples family match is anchored to the start of the name so Pineapple is not grouped under Apples. Month-strip cells have explicit visible backgrounds and a strong outline around the selected month.

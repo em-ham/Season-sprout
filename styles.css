@@ -34,3 +34,14 @@ dialog{border:1px solid var(--line);border-radius:20px;padding:0;width:min(620px
 .month-box{display:block;height:14px;border-radius:3px;border:1px solid rgba(35,55,43,.08)}
 .month-caption{font-size:.76rem;color:var(--muted);margin:7px 0 0}
 @media(max-width:420px){.month-strip{gap:2px}.month-name{font-size:.55rem}.month-box{height:11px}}
+
+
+/* Visibility hardening for the 12-month calendar */
+.month-strip{width:100%;display:grid!important;grid-template-columns:repeat(12,minmax(0,1fr));align-items:stretch}
+.month-cell{display:block!important;min-width:0}
+.month-box{display:block!important;width:100%;min-width:8px;height:18px!important;box-sizing:border-box;border:1px solid rgba(35,55,43,.18)!important;border-radius:3px}
+.month-box.harvest{background-color:#6c9b69!important}
+.month-box.storage{background-color:#e7bd57!important}
+.month-box.none{background-color:#e8e9e3!important}
+.month-cell.current-month .month-name{color:var(--forest);font-weight:900}
+.month-cell.current-month .month-box{outline:2px solid var(--forest);outline-offset:1px}
