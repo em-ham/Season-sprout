@@ -2,9 +2,31 @@
 const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
 const SLOTS=["Chilli","Salad","Soup","Bolognese-style","Pizza + simple side","Vegetarian patty","Curry","Ramen / noodle-style","Stir-fry for rice/noodles","Pasta dish 1","Tomato rice / risotto-style","Egg fried rice-style","Pasta dish 2","Daal","Bean/lentil stew or bake","Mexican-style"];
 const KEY="seasonSproutDataV1";
+const DATA_VERSION=2;
 const clone=x=>JSON.parse(JSON.stringify(x));
-let state={ingredients:clone(SEED_INGREDIENTS),recipes:[],plans:[]};
-try{const saved=localStorage.getItem(KEY);if(saved){const parsed=JSON.parse(saved);state={...state,...parsed};}}catch(e){}
+let state={ingredients:clone(SEED_INGREDIENTS),recipes:[],plans:[],dataVersion:DATA_VERSION};
+// Refresh seasonal facts from the bundled database while retaining each browser's personal edits.
+try{
+ const saved=localStorage.getItem(KEY);
+ if(saved){
+  const parsed=JSON.parse(saved);
+  const savedByName=new Map((parsed.ingredients||[]).map(x=>[String(x.name||"").trim().toLowerCase(),x]));
+  const refreshed=clone(SEED_INGREDIENTS).map(seed=>{
+   const old=savedByName.get(seed.name.trim().toLowerCase());
+   if(!old)return seed;
+   return {...seed,
+    preference:old.preference||seed.preference,
+    notes:old.notes&&old.notes!=="Add recipe-use notes"?old.notes:seed.notes,
+    excludeByDefault:(old.preference||seed.preference)==="Dislike",
+    id:old.id
+   };
+  });
+  // Keep user-added ingredients, but use the bundled database for known records.
+  const known=new Set(refreshed.map(x=>x.name.trim().toLowerCase()));
+  const custom=(parsed.ingredients||[]).filter(x=>!known.has(String(x.name||"").trim().toLowerCase()));
+  state={...state,...parsed,ingredients:[...refreshed,...custom],recipes:parsed.recipes||[],plans:parsed.plans||[],dataVersion:DATA_VERSION};
+ }
+}catch(e){}
 let editing={type:null,id:null};
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -36,14 +58,31 @@ function preferencePill(p){return `<span class="pill ${p==="Dislike"?"dislike":"
 function renderSeasonal(){
  const month=Number($("#monthSelect").value),q=$("#seasonSearch").value.toLowerCase(),cat=$("#seasonCategory").value,pref=$("#seasonPreference").value,hide=$("#hideDislikes").checked;
  const items=state.ingredients.filter(x=>(!hide||x.preference!=="Dislike")&&(!q||x.name.toLowerCase().includes(q))&&(!cat||x.category===cat)&&(!pref||x.preference===pref));
- const uk=items.filter(x=>x.months?.[month]&&x.availabilityType==="UK-grown seasonal");
- const imp=items.filter(x=>x.months?.[month]&&x.availabilityType==="Imported seasonal");
- const fresh=items.filter(x=>x.months?.[month]&&!["UK-grown seasonal","Imported seasonal"].includes(x.availabilityType));
- const preserved=items.filter(x=>!x.months?.[month]&&x.gapFiller);
- const group=(title,note,arr,kind)=>`<section class="priority-group"><h3><i class="dot ${kind}"></i>${title}<span class="group-note">${arr.length} ingredients</span></h3>${arr.length?`<div class="ingredient-grid">${arr.map(card).join("")}</div>`:`<div class="empty-state">No matching ingredients in this group with the current filters.</div>`}</section>`;
- $("#seasonalGroups").innerHTML=group("1 · Fresh UK seasonal","First choice",uk,"uk")+group("2 · Fresh, in global season","Seasonal imports",imp,"import")+group("Fresh year-round / storage","Available outside a narrow season",fresh,"uk")+group("3 · Preserved gap-fillers","Useful when fresh options aren't in season",preserved,"preserve");
+ const has=(x,key)=>Array.isArray(x[key])?Boolean(x[key][month]):Boolean(x.months?.[month]);
+ const outdoor=items.filter(x=>has(x,"ukOutdoorMonths"));
+ const storage=items.filter(x=>has(x,"storageMonths")&&!has(x,"ukOutdoorMonths"));
+ const protectedFresh=items.filter(x=>has(x,"protectedMonths")&&!has(x,"ukOutdoorMonths")&&!has(x,"storageMonths"));
+ const uk=[...outdoor,...storage,...protectedFresh].sort((a,b)=>a.name.localeCompare(b.name));
+ const imp=items.filter(x=>has(x,"importedMonths")&&!has(x,"ukOutdoorMonths")&&!has(x,"protectedMonths"));
+ const preserve=items.filter(x=>!has(x,"ukOutdoorMonths")&&!has(x,"storageMonths")&&!has(x,"protectedMonths")&&!has(x,"importedMonths")&&(x.gapFiller||x.preservedOptions||x.preservedGapFillerNotes));
+ const group=(title,note,arr,kind)=>`<section class="priority-group"><h3><i class="dot ${kind}"></i>${title}<span class="group-note">${arr.length} ingredients</span></h3><p class="group-explainer">${note}</p>${arr.length?`<div class="ingredient-grid">${arr.map(x=>card(x,month)).join("")}</div>`:`<div class="empty-state">No matching ingredients in this group with the current filters. A blank month marker means “not recorded”, not definitely unavailable.</div>`}</section>`;
+ const ukNote=`${outdoor.length} with a recorded outdoor harvest window; ${storage.length} storage-only; ${protectedFresh.length} protected-grown window(s). Storage and protected growing are labelled separately.`;
+ $("#seasonalGroups").innerHTML=group("1 · Fresh UK-grown seasonal","Outdoor harvest first; storage and protected growing are distinguished",uk,"uk")+group("2 · Fresh imports in growing-region season","Regional season windows are not a live UK stock check or always an origin-specific import schedule",imp,"import")+group("3 · Preserved alternatives","Only shown where preserved-option data exists and no fresh month window is recorded",preserve,"preserve");
+ const first=$("#seasonalGroups .priority-group .group-explainer");
+ if(first)first.textContent=ukNote;
 }
-function card(x){return `<article class="produce-card"><div class="card-top"><div><h4>${esc(x.name)}</h4><p class="category-label">${esc(x.category)}</p></div>${preferencePill(x.preference)}</div><div class="card-detail">${x.months?.[Number($("#monthSelect")?.value)||0]?"Fresh month marked":"Fresh month not marked"} · ${esc(x.availabilityType)}</div>${x.seasonNotes?`<p class="card-detail">${esc(x.seasonNotes)}</p>`:""}${x.gapFiller?`<p class="card-detail"><span class="pill preserved">Gap filler</span> ${esc(x.gapFiller)}</p>`:""}<div class="card-actions"><button class="small-button" data-edit-ingredient="${esc(x.name)}">Edit details</button></div></article>`}
+function card(x,monthOverride=null){
+ const month=monthOverride===null?Number($("#monthSelect")?.value)||0:monthOverride;
+ const outdoor=Array.isArray(x.ukOutdoorMonths)&&x.ukOutdoorMonths[month];
+ const storage=Array.isArray(x.storageMonths)&&x.storageMonths[month];
+ const protectedFresh=Array.isArray(x.protectedMonths)&&x.protectedMonths[month];
+ const imported=Array.isArray(x.importedMonths)&&x.importedMonths[month];
+ const monthLabel=outdoor?"UK outdoor harvest window":storage?"UK storage availability window":protectedFresh?"UK protected-growing window":imported?"Imported growing-region season window":"No fresh month window recorded";
+ const evidence=x.verificationStatus?`Verification: ${x.verificationStatus}`:"Seasonal verification status not recorded";
+ const origin=x.originBySeason?`Origin evidence: ${x.originBySeason}`:(x.importOrigins?`Possible growing regions: ${x.importOrigins}`:"");
+ const note=[x.seasonNotes,origin,evidence].filter(Boolean).join(" · ");
+ return `<article class="produce-card"><div class="card-top"><div><h4>${esc(x.name)}</h4><p class="category-label">${esc(x.category)}</p></div>${preferencePill(x.preference)}</div><div class="card-detail">${esc(monthLabel)} · ${esc(x.availabilityType||"Season needs checking")}</div>${note?`<p class="card-detail">${esc(note)}</p>`:""}${x.gapFiller?`<p class="card-detail"><span class="pill preserved">Preserved option</span> ${esc(x.gapFiller)}</p>`:(x.preservedGapFillerNotes?`<p class="card-detail"><span class="pill preserved">Preserved note</span> ${esc(x.preservedGapFillerNotes)}</p>`:"")}${x.sourceUrls?`<details class="card-detail"><summary>Evidence and sources</summary><p>${esc(x.sourceUrls)}</p>${x.seasonalConfidence?`<p>Confidence: ${esc(x.seasonalConfidence)}</p>`:""}</details>`:""}<div class="card-actions"><button class="small-button" data-edit-ingredient="${esc(x.name)}">Edit details</button></div></article>`;
+}
 function produceFamily(name){
  const n=name.toLowerCase();
  const families=[
@@ -102,7 +141,7 @@ function openEditor(type,item=null){
   const x=item||{name:"",category:categories()[0]||"Other",preference:"Not tried",ukSeason:"",availabilityType:"Season needs checking",seasonNotes:"",preservedOptions:"",gapFiller:"",notes:"",excludeByDefault:false,months:Array(12).fill(false)};
   $("#dialogTitle").textContent=item?"Edit ingredient":"Add ingredient";
   f+=field("Ingredient name","name",x.name);f+=field("Category","category",x.category,"text",false);f+=field("Preference","preference",x.preference,"text",false,["Love","Like","Okay","Dislike","Not tried"]);f+=field("Availability type","availabilityType",x.availabilityType,"text",true,["UK-grown seasonal","Imported seasonal","Fresh year-round / storage / protected","Season needs checking"]);f+=field("Fresh UK season","ukSeason",x.ukSeason,"text",true);f+=field("Season notes","seasonNotes",x.seasonNotes,"textarea",true);f+=field("Preserved options","preservedOptions",x.preservedOptions,"text",true);f+=field("Suggested gap-filler","gapFiller",x.gapFiller,"text",true);f+=field("Your notes","notes",x.notes,"textarea",true);
-  f+=`<div class="field full"><span>Fresh month markers</span><div class="filter-row">${MONTHS.map((m,i)=>`<label class="check-label"><input type="checkbox" name="month${i}" ${x.months?.[i]?"checked":""}>${m.slice(0,3)}</label>`).join("")}</div></div>`;
+  f+=`<div class="field full"><span>Fresh month markers</span><div class="filter-row">${MONTHS.map((m,i)=>`<label class="check-label"><input type="checkbox" name="month${i}" ${(x.ukOutdoorMonths||x.months)?.[i]?"checked":""}>${m.slice(0,3)}</label>`).join("")}</div></div>`;
  }else if(type==="recipe"){
   const x=item||{name:"",slot:SLOTS[0],season:"",time:"",ingredients:"",method:""};
   $("#dialogTitle").textContent=item?"Edit recipe":"New recipe";
@@ -119,7 +158,7 @@ function saveEditor(e){
  e.preventDefault();const form=new FormData($("#editForm")),data={};for(const [k,v] of form.entries())data[k]=v;
  if(editing.type==="ingredient"){
   const old=currentItem();const months=MONTHS.map((m,i)=>$("#dialogFields").querySelector(`[name="month${i}"]`).checked);
-  const x={...(old||{}),...data,months,excludeByDefault:data.preference==="Dislike",id:old?.id||id()};
+  const x={...(old||{}),...data,ukOutdoorMonths:months,months:months.map((v,i)=>Boolean(v||(old?.storageMonths||[])[i]||(old?.importedMonths||[])[i]||(old?.protectedMonths||[])[i])),excludeByDefault:data.preference==="Dislike",id:old?.id||id()};
   if(!x.name.trim()){toast("Please enter an ingredient name.");return}
   if(old)state.ingredients=state.ingredients.filter(y=>y!==old);state.ingredients.push(x);state.ingredients.sort((a,b)=>a.name.localeCompare(b.name));
   ["#seasonCategory","#libraryCategory"].forEach(s=>fillSelect($(s),categories(),"All categories"));

@@ -32,3 +32,17 @@ Month markers are an indicative starter calendar. Some records have incomplete s
 - Recipe idea capture with 16 recipe styles
 - Simple meal planner and shopping list
 - JSON data export
+
+
+## Database integration — Batch 33
+
+This build bundles the 213-record Season & Sprout database audited in Batch 33. The monthly guide distinguishes:
+- UK outdoor harvest windows
+- UK storage availability windows
+- UK protected-growing windows (currently unpopulated in the database)
+- imported growing-region season windows
+- preserved options where the database has relevant metadata
+
+The app does not check live retail stock. An empty month window means “not recorded”, not proof of unavailability. Imported growing-region windows are not necessarily evidence of UK imports from that origin in that month. Evidence URLs and verification notes are shown on produce cards where available.
+
+When this build opens in a browser with older Season & Sprout local data, it refreshes seasonal database fields from the bundled dataset while retaining saved preferences, personal notes, recipes, plans and user-added ingredients. Back up important data using **Export my data** before updating. Local data stays in that browser and does not sync between devices.
