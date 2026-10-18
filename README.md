@@ -65,3 +65,7 @@ The apples family match is anchored to the start of the name so Pineapple is not
 2. Useful year-round staples (cultivated mushrooms and cooking onions included as general supply staples, not a UK-origin guarantee).
 3. Fresh imports with a recorded growing-region season.
 4. Preserved alternatives for ingredients without a recorded fresh window this month. Common alternative formats are suggestions only; explicit dislike preferences for each format are excluded. Unknown preferences are not treated as a positive preference.
+
+
+## Seasonal-data correction: blanket all-year UK harvest markers
+Audit removed unsupported 12-month UK outdoor-harvest flags from 39 records, including avocado, pineapple, mango, citrus, melons, kiwi, grapes, and button mushrooms. These must not be shown as UK outdoor harvest. Button mushrooms are separately marked as year-round cultivated supply. Other items with missing/uncertain origin or season windows remain unclassified rather than being assigned invented months.
